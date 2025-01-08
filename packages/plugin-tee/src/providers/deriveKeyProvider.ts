@@ -238,11 +238,16 @@ const deriveKeyProvider: Provider = {
                     secretSalt,
                     agentId
                 );
-                const snKeypair = await provider
+                const snKeypair = await provider.deriveSnKeypair(
+                    "/",
+                    secretSalt,
+                    agentId
+                );
 
                 return JSON.stringify({
                     solana: solanaKeypair.keypair.publicKey,
                     evm: evmKeypair.keypair.address,
+                    sn: snKeypair.keypair.publicKey
                 });
             } catch (error) {
                 elizaLogger.error("Error creating PublicKey:", error);
