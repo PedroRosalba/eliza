@@ -72,7 +72,12 @@ class DeriveKeyProvider {
         elizaLogger.log("Remote Attestation Quote generated successfully!");
         return quote;
     }
-
+    /**
+     * Derives a raw key from the given path and subject.
+     * @param path - The path to derive the key from. This is used to derive the key from the root of trust.
+     * @param subject - The subject to derive the key from. This is used for the certificate chain.
+     * @returns The derived key.
+     */
     async rawDeriveKey(
         path: string,
         subject: string
@@ -94,7 +99,13 @@ class DeriveKeyProvider {
             throw error;
         }
     }
-
+    /**
+     * Derives an Ed25519 keypair from the given path and subject.
+     * @param path - The path to derive the key from. This is used to derive the key from the root of trust.
+     * @param subject - The subject to derive the key from. This is used for the certificate chain.
+     * @param agentId - The agent ID to generate an attestation for.
+     * @returns An object containing the derived keypair and attestation.
+     */
     async deriveEd25519Keypair(
         path: string,
         subject: string,
@@ -130,7 +141,13 @@ class DeriveKeyProvider {
             throw error;
         }
     }
-
+    /**
+     * Derives an ECDSA keypair from the given path and subject.
+     * @param path - The path to derive the key from. This is used to derive the key from the root of trust.
+     * @param subject - The subject to derive the key from. This is used for the certificate chain.
+     * @param agentId - The agent ID to generate an attestation for. This is used for the certificate chain.
+     * @returns An object containing the derived keypair and attestation.
+     */
     async deriveEcdsaKeypair(
         path: string,
         subject: string,
@@ -165,7 +182,13 @@ class DeriveKeyProvider {
             throw error;
         }
     }
-
+    /**
+     * Derives an Starknet keypair from the given path and subject.
+     * @param path - The path to derive the key from. This is used to derive the key from the root of trust.
+     * @param subject - The subject to derive the key from. This is used for the certificate chain.
+     * @param agentId - The agent ID to generate an attestation for.
+     * @returns An object containing the derived keypair and attestation.
+     */
     async deriveSnKeypair(
         path: string,
         subject: string,
@@ -176,15 +199,15 @@ class DeriveKeyProvider {
     }> {
         try {
             if (!path || !subject) {
-                console.error(
+                elizaLogger.error(
                     "Path and Subject are required for key derivation"
                 );
             }
-            console.log("Deriving Starknet Key in TEE...");
+            elizaLogger.log("Deriving Starknet Key in TEE...");
             const derivedKey = await this.client.deriveKey(path, subject);
             const uint8Parsed = derivedKey.asUint8Array();
             const stringParsed = uint8Parsed.toString();
-            
+
             const privateKey = starknet.starknetKeccak(stringParsed).toString();
             const publicKey = starknet.ec.starkCurve.getStarkKey(privateKey);
 
@@ -201,11 +224,11 @@ class DeriveKeyProvider {
             );
             const attestation = await this.generateDeriveKeyAttestation(
                 agentId,
-                AXcontractAddress    
+                AXcontractAddress
             );
             return { keypair: {privateKey: privateKey, publicKey: publicKey} , attestation: attestation}
         } catch (error) {
-            console.error("Error deriving Starknet key:", error);
+            elizaLogger.error("Error deriving Starknet key:", error);
             throw error;
         }
     }
@@ -229,18 +252,18 @@ const deriveKeyProvider: Provider = {
                 const secretSalt =
                     runtime.getSetting("WALLET_SECRET_SALT") || "secret_salt";
                 const solanaKeypair = await provider.deriveEd25519Keypair(
-                    "/",
                     secretSalt,
+                    "solana",
                     agentId
                 );
                 const evmKeypair = await provider.deriveEcdsaKeypair(
-                    "/",
                     secretSalt,
+                    "evm",
                     agentId
                 );
                 const snKeypair = await provider.deriveSnKeypair(
-                    "/",
                     secretSalt,
+                    "starknet",
                     agentId
                 );
 
